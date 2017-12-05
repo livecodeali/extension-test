@@ -1,0 +1,97 @@
+widget com.livecode.widget.kochcomplete
+
+use com.livecode.widget
+use com.livecode.canvas
+
+metadata version is "1.0.0"
+metadata author is "Ali Lloyd"
+metadata title is "Koch Snowflake"
+
+private variable mRecursion as Integer
+private variable mSize as Real
+
+/**
+The level of recursion
+
+Description:
+The recursionLevel controls how many iterations of the Koch 
+snowflake construction are performed. Maximum value is 7. 
+*/
+property recursionLevel get mRecursion set SetRecursion
+metadata recursionLevel.editor is "com.livecode.pi.integer"
+metadata recursionLevel.min is "0"
+metadata recursionLevel.step is "1"
+
+public handler SetRecursion(in pRecursion as Integer)
+	put the minimum of pRecursion and 7 into mRecursion
+	redraw all
+end handler
+
+public handler OnCreate()
+	put 1 into mRecursion
+	CalculateInitialTriangleSize()
+end handler
+
+public handler OnGeometryChanged()
+	put CalculateInitialTriangleSize() into mSize
+end handler
+
+handler CalculateInitialTriangleSize() returns Real
+	// we want the minimum of what can fit width-wise (i.e. the width)
+	// and what can fit height-wise.
+
+	// if x is the side length of the triangle, we have the height h of
+	// of the Koch Snowflake as h = 2*3^(1/2)*x / 3
+	// so x = 3^(1/2)*h / 2
+
+	return the minimum of my width and (my height * 3^(0.5)/2)
+end handler
+
+public handler OnPaint()
+	variable tPath as Path
+	put GetPathBetween(mRecursion, 0, mSize) into tPath
+
+	variable tSegment as Path
+	put GetPathBetween(mRecursion, -mSize, 0) into tSegment
+	rotate tSegment by -120
+	add tSegment to tPath
+
+	put GetPathBetween(mRecursion, 0, mSize) into tSegment
+	rotate tSegment by 120
+	translate tSegment by [mSize, 0]
+	add tSegment to tPath
+
+	translate tPath by [0, 3^(0.5) * mSize / 6]
+
+	stroke tPath on this canvas
+end handler
+
+handler GetPathBetween(in pRecurse as Integer, in pStartX as Real, in pEndX as Real) returns Path
+	if pRecurse is 0 then
+		return line path from point [pStartX, 0] to point [pEndX, 0]
+	end if
+
+	variable tPath as Path
+	// get the first segment
+	put GetPathBetween(pRecurse - 1, pStartX, pStartX + (pEndX - pStartX) / 3) into tPath
+
+	// add the middle segments - just get two identical segments at the next level of recursion and rotate accordingly
+	variable tSegment1 as Path
+	put GetPathBetween(pRecurse - 1, 0, (pEndX - pStartX) / 3) into tSegment1
+	rotate tSegment1 by -60
+	translate tSegment1 by [pStartX + (pEndX - pStartX) / 3, 0]
+	add tSegment1 to tPath
+
+	variable tSegment2 as Path
+	put GetPathBetween(pRecurse - 1, -(pEndX - pStartX) / 3, 0) into tSegment2
+	rotate tSegment2 by 60
+	translate tSegment2 by [pEndX - (pEndX - pStartX) / 3, 0]
+	add tSegment2 to tPath
+
+	// add the third segment
+	add GetPathBetween(pRecurse - 1, pStartX + 2 * (pEndX - pStartX) / 3, pEndX) to tPath
+
+	return tPath
+end handler
+
+end widget
