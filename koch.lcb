@@ -5,7 +5,7 @@ use com.livecode.canvas
 
 metadata version is "1.0.0"
 metadata author is "Ali Lloyd"
-metadata title is "Koch Snowflake"
+metadata title is "Koch Snowflake Example"
 
 private variable mRecursion as Integer
 private variable mSize as Real
